@@ -83,7 +83,7 @@ class Solver(object):
                                               dataset=self.dataset)
 
         self.build_model()
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("mps" if torch.cuda.is_available() else "cpu")
         self.criterion = nn.MSELoss()
 
     def build_model(self):

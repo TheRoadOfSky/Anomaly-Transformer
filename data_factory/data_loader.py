@@ -210,8 +210,10 @@ def get_loader_segment(data_path, batch_size, win_size=100, step=100, mode='trai
         dataset = PSMSegLoader(data_path, win_size, 1, mode)
 
     shuffle = False
-    if mode == 'train':
-        shuffle = True
+
+    # 因为idea是向前找attention选手，还不能shuffle，否则丢失依赖
+    # if mode == 'train':
+    #     shuffle = True
 
     data_loader = DataLoader(dataset=dataset,
                              batch_size=batch_size,
