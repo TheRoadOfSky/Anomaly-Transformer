@@ -7,10 +7,11 @@ from .embed import DataEmbedding, TokenEmbedding
 
 
 class EncoderLayer(nn.Module):
-    def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
+    def __init__(self, attention, attention2, d_model, d_ff=None, dropout=0.1, activation="relu"):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
         self.attention = attention
+        self.attention2 = attention2
         self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
         self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1)
         self.norm1 = nn.LayerNorm(d_model)
@@ -23,7 +24,13 @@ class EncoderLayer(nn.Module):
             x, x, x,
             attn_mask=attn_mask
         )
-        x = x + self.dropout(new_x)
+        transpose_x = torch.transpose(x, 1, 2)
+        permute_new_x = self.attention2(
+            transpose_x, transpose_x, transpose_x,
+            attn_mask=attn_mask
+        ).permute(0, 2, 1)
+
+        x = x + self.dropout(new_x) + self.dropout(permute_new_x)
         y = x = self.norm1(x)
         y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
         y = self.dropout(self.conv2(y).transpose(-1, 1))
@@ -63,6 +70,9 @@ class AnomalyTransformer(nn.Module):
                     AttentionLayer(
                         AnomalyAttention(False, attention_dropout=dropout, output_attention=output_attention),
                         d_model, n_heads),
+                    AttentionLayer(
+                        AnomalyAttention(False, attention_dropout=dropout, output_attention=output_attention),
+                        win_size, n_heads=10),
                     d_model,
                     d_ff,
                     dropout=dropout,
