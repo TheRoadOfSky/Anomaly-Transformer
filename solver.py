@@ -124,7 +124,7 @@ class Solver(object):
                 iter_count += 1
                 input = input_data.float().to(self.device)
 
-                output, series, prior, _ = self.model(input)
+                output = self.model(input)
 
                 rec_loss = self.criterion(output, input)
 

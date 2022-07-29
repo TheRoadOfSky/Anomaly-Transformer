@@ -19,7 +19,7 @@ class EncoderLayer(nn.Module):
         self.activation = F.relu if activation == "relu" else F.gelu
 
     def forward(self, x, attn_mask=None):
-        new_x, attn, mask, sigma = self.attention(
+        new_x = self.attention(
             x, x, x,
             attn_mask=attn_mask
         )
@@ -28,7 +28,7 @@ class EncoderLayer(nn.Module):
         y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
         y = self.dropout(self.conv2(y).transpose(-1, 1))
 
-        return self.norm2(x + y), attn, mask, sigma
+        return self.norm2(x + y)
 
 
 class Encoder(nn.Module):
@@ -38,20 +38,13 @@ class Encoder(nn.Module):
         self.norm = norm_layer
 
     def forward(self, x, attn_mask=None):
-        # x [B, L, D]
-        series_list = []
-        prior_list = []
-        sigma_list = []
         for attn_layer in self.attn_layers:
-            x, series, prior, sigma = attn_layer(x, attn_mask=attn_mask)
-            series_list.append(series)
-            prior_list.append(prior)
-            sigma_list.append(sigma)
+            x = attn_layer(x, attn_mask=attn_mask)
 
         if self.norm is not None:
             x = self.norm(x)
 
-        return x, series_list, prior_list, sigma_list
+        return x
 
 
 class AnomalyTransformer(nn.Module):
@@ -74,7 +67,7 @@ class AnomalyTransformer(nn.Module):
                     d_ff,
                     dropout=dropout,
                     activation=activation
-                ) for l in range(e_layers)
+                ) for _ in range(e_layers)
             ],
             norm_layer=torch.nn.LayerNorm(d_model)
         )
@@ -83,10 +76,7 @@ class AnomalyTransformer(nn.Module):
 
     def forward(self, x):
         enc_out = self.embedding(x)
-        enc_out, series, prior, sigmas = self.encoder(enc_out)
+        enc_out = self.encoder(enc_out)
         enc_out = self.projection(enc_out)
 
-        if self.output_attention:
-            return enc_out, series, prior, sigmas
-        else:
-            return enc_out  # [B, L, D]
+        return enc_out  # [B, L, D]
