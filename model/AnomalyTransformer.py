@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .attn import AnomalyAttention, AttentionLayer
+from .attn import AnomalyAttention, AttentionLayer, DelayLayer
 from .embed import DataEmbedding, TokenEmbedding
 
 
@@ -70,7 +70,7 @@ class AnomalyTransformer(nn.Module):
                     AttentionLayer(
                         AnomalyAttention(False, attention_dropout=dropout, output_attention=output_attention),
                         d_model, n_heads),
-                    AttentionLayer(
+                    DelayLayer(
                         AnomalyAttention(False, attention_dropout=dropout, output_attention=output_attention),
                         win_size, n_heads=10),
                     d_model,
