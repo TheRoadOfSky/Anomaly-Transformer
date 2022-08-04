@@ -22,22 +22,23 @@ from data_factory.data_loader import get_loader_segment
 #
 # print(518 * 256)
 
-t1: Tensor = torch.tensor([[[1, 2],
-                    [3, 4],
-                    [5, 6]],
-                   [[5, 6],
-                    [7, 8],
-                    [9, 10]]])
-print(t1.shape)
-temp = t1.view(1, -1, 2)
-print(temp)
-print(temp.shape)
-print('*' * 20)
-repeat = temp.repeat(2, 1, 1)
-print(repeat)
-print(repeat.shape)
-
+# t1: Tensor = torch.tensor([[[1, 2],
+#                     [3, 4],
+#                     [5, 6]],
+#                    [[5, 6],
+#                     [7, 8],
+#                     [9, 10]]])
+# print(t1.shape)
+# temp = t1.view(1, -1, 2)
+# print(temp)
+# print(temp.shape)
+# print('*' * 20)
+# repeat = temp.repeat(2, 1, 1)
+# print(repeat)
+# print(repeat.shape)
+#
 print(torch.cuda.is_available())
+print(torch.cuda.get_device_name(0))
 # print('*' * 10)
 # print(repeat)
 # print(repeat.shape)

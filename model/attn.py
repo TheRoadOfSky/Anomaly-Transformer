@@ -109,8 +109,8 @@ class DelayLayer(nn.Module):
         _, S, _ = keys.shape
         H = self.n_heads
 
-        print("batch开始")
-        time_now = time.time()
+        # print("batch开始")
+        # time_now = time.time()
 
         queries = self.query_projection(queries).view(B, L, H, -1)
         keys = self.key_projection(keys).view(1, B * S, H, -1).repeat(B, 1, 1, 1)
@@ -124,6 +124,6 @@ class DelayLayer(nn.Module):
         )
         out = out.view(B, L, -1)
 
-        print("batch结束")
-        print("cost time: {}".format(time.time() - time_now))
+        # print("batch结束")
+        # print("cost time: {}".format(time.time() - time_now))
         return self.out_projection(out)

@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import os
+import gc
 import time
 from utils.utils import *
 from model.AnomalyTransformer import AnomalyTransformer
@@ -77,11 +78,12 @@ class Solver(object):
                                               dataset=self.dataset)
 
         self.build_model()
-        self.device = torch.device("mps" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        gc.collect()
         self.criterion = nn.MSELoss()
 
     def build_model(self):
-        self.model = AnomalyTransformer(win_size=self.win_size, enc_in=self.input_c, c_out=self.output_c, e_layers=3)
+        self.model = AnomalyTransformer(win_size=self.win_size, enc_in=self.input_c, c_out=self.output_c, d_model=self.model_d, d_ff=self.ff_d, e_layers=3)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         if torch.cuda.is_available():
@@ -119,6 +121,7 @@ class Solver(object):
             self.model.train()
             for i, (input_data, labels) in enumerate(self.train_loader):
 
+                temp_time = time.time()
                 self.optimizer.zero_grad()
                 iter_count += 1
                 input = input_data.float().to(self.device)
@@ -130,6 +133,7 @@ class Solver(object):
                 loss1_list.append(rec_loss.item())
                 loss1 = rec_loss
 
+                # print("cost time: {}".format(time.time() - temp_time))
                 if (i + 1) % 100 == 0:
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.num_epochs - epoch) * train_steps - i)
@@ -226,31 +230,31 @@ class Solver(object):
         print("gt:     ", gt.shape)
 
         # detection adjustment
-        # anomaly_state = False
-        # for i in range(len(gt)):
-        #     if gt[i] == 1 and pred[i] == 1 and not anomaly_state:
-        #         anomaly_state = True
-        #         for j in range(i, 0, -1):
-        #             if gt[j] == 0:
-        #                 break
-        #             else:
-        #                 if pred[j] == 0:
-        #                     pred[j] = 1
-        #         for j in range(i, len(gt)):
-        #             if gt[j] == 0:
-        #                 break
-        #             else:
-        #                 if pred[j] == 0:
-        #                     pred[j] = 1
-        #     elif gt[i] == 0:
-        #         anomaly_state = False
-        #     if anomaly_state:
-        #         pred[i] = 1
-        #
-        # pred = np.array(pred)
-        # gt = np.array(gt)
-        # print("pred: ", pred.shape)
-        # print("gt:   ", gt.shape)
+        anomaly_state = False
+        for i in range(len(gt)):
+            if gt[i] == 1 and pred[i] == 1 and not anomaly_state:
+                anomaly_state = True
+                for j in range(i, 0, -1):
+                    if gt[j] == 0:
+                        break
+                    else:
+                        if pred[j] == 0:
+                            pred[j] = 1
+                for j in range(i, len(gt)):
+                    if gt[j] == 0:
+                        break
+                    else:
+                        if pred[j] == 0:
+                            pred[j] = 1
+            elif gt[i] == 0:
+                anomaly_state = False
+            if anomaly_state:
+                pred[i] = 1
+
+        pred = np.array(pred)
+        gt = np.array(gt)
+        print("pred: ", pred.shape)
+        print("gt:   ", gt.shape)
 
         from sklearn.metrics import precision_recall_fscore_support
         from sklearn.metrics import accuracy_score

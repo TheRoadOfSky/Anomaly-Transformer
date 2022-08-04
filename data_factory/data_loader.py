@@ -163,15 +163,15 @@ class SMDSegLoader(object):
         self.step = step
         self.win_size = win_size
         self.scaler = StandardScaler()
-        data = np.load(data_path + "/SMD_train_temp.npy")
+        data = np.load(data_path + "/SMD_train.npy")
         self.scaler.fit(data)
         data = self.scaler.transform(data)
-        test_data = np.load(data_path + "/SMD_test_temp.npy")
+        test_data = np.load(data_path + "/SMD_test.npy")
         self.test = self.scaler.transform(test_data)
         self.train = data
         data_len = len(self.train)
         self.val = self.train[(int)(data_len * 0.8):]
-        self.test_labels = np.load(data_path + "/SMD_test_label_temp.npy")
+        self.test_labels = np.load(data_path + "/SMD_test_label.npy")
 
     def __len__(self):
 
